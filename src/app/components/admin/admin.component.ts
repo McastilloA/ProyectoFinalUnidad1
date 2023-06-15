@@ -2,7 +2,7 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { CommonModule, DatePipe } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 
-import { ListCapacityService } from 'src/app/shared/services/list-capacity.service';
+import { ListCapacityService } from 'src/app/shared/services/capacity/list-capacity.service';
 
 import { RespService } from 'src/app/shared/interfaces/respService';
 
@@ -31,7 +31,7 @@ export class AdminComponent implements OnInit {
   faEdit = faEdit;
   faSignOut = faSignOut;
   formGroupCapacity!: FormGroup;
-  nowDate = new Date();
+  nowDate!: Date;
   listUsers!: RespService;
   showSpinner!: boolean;
   action = 0;
@@ -44,6 +44,7 @@ export class AdminComponent implements OnInit {
   }
 
   capacityForm(): void {
+    this.nowDate = new Date();
     this.formGroupCapacity = this.fb.group({
       id: [null],
       name: [null, [Validators.required, Validators.maxLength(50)]],
@@ -122,9 +123,12 @@ export class AdminComponent implements OnInit {
   }
 
   registerExit(user: Capacity): void {
-    this.updateUserInFieldExit(user);
     this.showSpinner = true;
-    this.listCapacityService.updateCapacity(this.formGroupCapacity.value).subscribe({
+    this.nowDate = new Date();
+    const request: any = user;
+    request.timeAfterDate = this.datepipe.transform(this.nowDate, 'yyyy-MM-dd hh:mm:ss');
+
+    this.listCapacityService.updateCapacity(request).subscribe({
       next: (resp: RespService) => {
         this.showSpinner = false;
         if (resp.status) {
@@ -181,21 +185,6 @@ export class AdminComponent implements OnInit {
     });
   }
 
-  updateUserInFieldExit(userInfo: Capacity) {
-    this.formGroupCapacity.patchValue({
-      id: userInfo.id,
-      name: userInfo.name,
-      lastName: userInfo.lastName,
-      typeDocument: userInfo.typeDocument,
-      document: userInfo.document,
-      email: userInfo.email,
-      phone: userInfo.phone,
-      birthDate: userInfo.birthDate,
-      timeNowDate: userInfo.timeNowDate,
-      timeAfterDate: this.datepipe.transform(this.nowDate, 'yyyy-MM-dd hh:mm:ss')
-    });
-  }
-
   /**
    * Función que abre el modal por falla de servidor.
    */
@@ -229,9 +218,9 @@ export class AdminComponent implements OnInit {
    */
   toastFail(message: any) {
     Swal.fire({
-      title: 'Error del servidor',
+      title: 'Lo sentimos',
       text: message,
-      icon: 'error',
+      icon: 'info',
       position: 'top-right',
       showConfirmButton: false,
       timer: 4000
